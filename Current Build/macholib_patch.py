@@ -7,7 +7,7 @@ Add 'import macholib_patch' to the top of set_py2app.py
 import macholib
 #print("~"*60 + "macholib verion: "+macholib.__version__)
 if macholib.__version__ <= "1.7":
-    print("Applying macholib patch...")
+    # print("Applying macholib patch...")
     import macholib.dyld
     import macholib.MachOGraph
     dyld_find_1_7 = macholib.dyld.dyld_find

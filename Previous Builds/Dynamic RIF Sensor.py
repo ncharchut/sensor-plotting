@@ -23,9 +23,9 @@ channel_count, r0_step = 0, 0
 lines, lined = [], {}
 colors = ['b','g','r','c','m','y','k','purple','darkgreen']
 
-channels = [[0] for i in xrange(9)]
+channels = [deque([0]) for i in xrange(9)]
 channels_dup = [[0] for i in xrange(9)]
-time_x = [[0] for i in xrange(9)]
+time_x = [deque([0]) for i in xrange(9)]
 time_x_dup = [[0] for i in xrange(9)]
 channels_full = [[0 for i in xrange(i)] for i in xrange(9)]
 
@@ -41,7 +41,7 @@ r0 = {i:0.3 for i in xrange(9)}
 ylim_max = 0
 visible = {k:True for k in xrange(9)}
 live = {i:True for i in xrange(9)}
-live[1] = live[2] = False
+live[1] = live[2] = live[5] = live[8] = False
 threshold = -.01
 init_mult = 2.41
 lethal = 5
@@ -156,7 +156,7 @@ def plotfunc():
     if maxline != 1:    # fill from maxline and the x axis
         y2 = np.array([lethal for i in maxline])
         for fill in ax.collections:
-            ax.collections.pop()
+            ax.collections.pop(-1)
         plt.fill_between(time_x[ind],maxline, facecolor='green',alpha=0.3,where=maxline > y2)
         
     leg = plt.legend(fancybox=True,shadow=True,loc='upper left',framealpha=0.5,prop=font)
@@ -211,8 +211,10 @@ writer = csv.writer(f)
 all_times = []
 count = [0 for i in xrange(9)]
 init_count = 0
-exe = ['telnet','192.168.0.104']#'sense01.local']
-p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+# exe = ['telnet','sense01.local']#'sense01.local']
+exe1 = ['telnet', 'sense01.local']
+p = subprocess.Popen(exe1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+# p1 = subprocess.Popen(exe1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 time.sleep(3) # may not be necessary
 
 
@@ -222,6 +224,7 @@ while True:
         plt.connect('key_press_event', stop_func)
         retcode = p.poll() #returns None while subprocess is running
         data = p.stdout.readline() # takes a line of incoming data
+        # data1 = p1.stdout.readline()
         if retcode is not None:
             print """Connection unsuccessful. Please restart the sensor
                     and wait one minute before attempting connection."""
@@ -231,10 +234,23 @@ while True:
             init_count += 1 
             continue 
     
+        if data[0] == '?':
+            continue
         dataline = data
         dataArray = dataline.split(' , ') # might have to replace depending on delimiter
+        print dataArray
         channel,curtime,resistance = dataArray[0],dataArray[1],dataArray[2].split(' ')[0]
         index, curtime, resistance = int(channel), int(curtime), float(resistance)
+
+        # dataline = data1
+        # dataArray = dataline.split(' , ') # might have to replace depending on delimiter
+        # channel,curtime,resistance = dataArray[0],dataArray[1],dataArray[2][:-2]
+        # index, curtime, resistance = int(channel), int(curtime), float(resistance)
+
+
+        # print data
+        # print '-----------'
+        # print data1
 
         if basetime == True:
             basetime = curtime
@@ -265,10 +281,16 @@ while True:
         if channel_count == 9:    # Needed to simulate live datastream
             r0_step += 1
             if r0_step >= 3 and r0[index] == 0.3: # determines r0 for all channels, adjust r_step for actual live sensor
+                # if resistance != 0:
                 for i in xrange(9):
                     if chval(i)[-1] != 0:
                         r0[i] = chval(i)[-1]
             channel_count = 0
+
+        if len(time_x[index]) > 50:
+            time_x[index].popleft()
+            channels[index].popleft()
+
         drawnow(plotfunc)
         plt.pause(.001)
 

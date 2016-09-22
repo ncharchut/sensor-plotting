@@ -8,9 +8,9 @@ Usage:
 from setuptools import setup
 import macholib_patch
 
-APP = ['Static RIF Sensor.py']
-DATA_FILES = ['datatest.csv','logo.png']
-OPTIONS = {'argv_emulation': True,'includes':['matplotlib']}
+APP = ['subplot_test.py']
+DATA_FILES = []
+OPTIONS = {'argv_emulation': True}
 
 setup(
     app=APP,
